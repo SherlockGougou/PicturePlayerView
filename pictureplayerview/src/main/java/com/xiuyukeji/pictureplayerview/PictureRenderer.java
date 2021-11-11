@@ -1,5 +1,10 @@
 package com.xiuyukeji.pictureplayerview;
 
+import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_CENTER;
+import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_CROP;
+import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_HEIGHT;
+import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_WIDTH;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,11 +16,6 @@ import android.view.TextureView;
 import com.xiuyukeji.pictureplayerview.interfaces.OnErrorListener;
 import com.xiuyukeji.pictureplayerview.interfaces.OnStopListener;
 import com.xiuyukeji.pictureplayerview.interfaces.OnUpdateListener;
-
-import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_CENTER;
-import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_CROP;
-import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_HEIGHT;
-import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_WIDTH;
 
 /**
  * 图片播放器渲染类

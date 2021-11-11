@@ -1,14 +1,14 @@
 package com.xiuyukeji.pictureplayerview.annotations;
 
-import android.support.annotation.IntDef;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
 import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_CENTER;
 import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_CROP;
 import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_HEIGHT;
 import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_WIDTH;
+
+import androidx.annotation.IntDef;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * 缩放类型

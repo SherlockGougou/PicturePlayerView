@@ -1,12 +1,12 @@
 package com.xiuyukeji.pictureplayerview.annotations;
 
-import android.support.annotation.IntDef;
+import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.ASSETS;
+import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.FILE;
+
+import androidx.annotation.IntDef;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-
-import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.ASSETS;
-import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.FILE;
 
 /**
  * 图片来源

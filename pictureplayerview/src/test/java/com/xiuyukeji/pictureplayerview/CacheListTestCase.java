@@ -1,15 +1,15 @@
 package com.xiuyukeji.pictureplayerview;
 
-import com.xiuyukeji.pictureplayerview.utils.CacheList;
-import com.xiuyukeji.pictureplayerview.utils.CacheList.OnRemoveListener;
-
-import org.junit.Test;
-
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+
+import com.xiuyukeji.pictureplayerview.utils.CacheList;
+import com.xiuyukeji.pictureplayerview.utils.CacheList.OnRemoveListener;
+
+import org.junit.Test;
 
 /**
  * 测试CacheList

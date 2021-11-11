@@ -1,6 +1,6 @@
 package com.xiuyukeji.pictureplayerview.sample.utils;
 
-import android.support.annotation.IntDef;
+import androidx.annotation.IntDef;
 
 /**
  * 图片信息管理
@@ -9,33 +9,13 @@ import android.support.annotation.IntDef;
  */
 public class PictureInfoUtil {
 
-    private static volatile PictureInfoUtil instance;
-
-    public static PictureInfoUtil get() {
-        if (instance == null) {
-            synchronized (PictureInfoUtil.class) {
-                if (instance == null) {
-                    instance = new PictureInfoUtil();
-                }
-            }
-        }
-        return instance;
-    }
-
     public static final int OPAQUE = 0, TRANSPARENT = 1;
-
-    @IntDef({OPAQUE, TRANSPARENT})
-    private @interface PictureType {
-    }
-
+    private static volatile PictureInfoUtil instance;
     private final String mFileName = "lottielogo";
     private final String mTransparentFileName = "lottielogo_transparent";
-
     private final String[] mPaths;
     private final String[] mTransparentPaths;
-
     private final long mDuration;
-
     private int mType = OPAQUE;
 
     private PictureInfoUtil() {
@@ -52,16 +32,27 @@ public class PictureInfoUtil {
         mDuration = count * 1000 / 25;
     }
 
+    public static PictureInfoUtil get() {
+        if (instance == null) {
+            synchronized (PictureInfoUtil.class) {
+                if (instance == null) {
+                    instance = new PictureInfoUtil();
+                }
+            }
+        }
+        return instance;
+    }
+
     private static String getIndex(int max, int i) {
         return String.format("%0" + String.valueOf(max).length() + "d", i);
     }
 
-    public void setType(@PictureType int type) {
-        this.mType = type;
-    }
-
     public int getType() {
         return mType;
+    }
+
+    public void setType(@PictureType int type) {
+        this.mType = type;
     }
 
     public long getDuration() {
@@ -74,5 +65,9 @@ public class PictureInfoUtil {
 
     public String[] getPaths() {
         return mType == OPAQUE ? mPaths : mTransparentPaths;
+    }
+
+    @IntDef({OPAQUE, TRANSPARENT})
+    private @interface PictureType {
     }
 }

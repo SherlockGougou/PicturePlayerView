@@ -1,11 +1,14 @@
 package com.xiuyukeji.pictureplayerview;
 
+import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.FILE;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.SystemClock;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
+
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
 
 import com.xiuyukeji.pictureplayerview.annotations.PictureSource;
 import com.xiuyukeji.pictureplayerview.utils.CacheList;
@@ -20,8 +23,6 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.FILE;
-
 /**
  * 播放实现
  *
@@ -29,21 +30,15 @@ import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.FILE;
  */
 class PicturePlayer {
     public static final int DEFAULT_MAX_CACHE_NUMBER = 12;
-
-    private Context mContext;
-
-    private int mSource;//设置来源
     private final int mCacheFrameNumber;//最大缓存帧数
     private final int mReusableFrameNumber;//最大复用缓存帧数
-
+    private final Object mSeekToLock = new Object();
+    private Context mContext;
+    private int mSource;//设置来源
     private volatile int mReadFrame;
     private volatile int mSeekToIndex = -1;
-
     private CacheList<Bitmap> mCacheBitmaps;
     private CacheList<Bitmap> mReusableBitmaps;
-
-    private final Object mSeekToLock = new Object();
-
     private volatile boolean mIsReadCancel;
     private volatile boolean mIsPlayCancel;
     private volatile boolean mIsCancel;
@@ -56,6 +51,31 @@ class PicturePlayer {
     private Scheduler mScheduler;
 
     private Renderer mRenderer;
+    private final OnSeekToListener mSeekListener = new OnSeekToListener() {
+        @Override
+        public void onSeekTo(long frameIndex) {
+            synchronized (mSeekToLock) {
+                if (mCacheBitmaps.isEmpty()) {
+                    SchedulerUtil.lockWait(mSeekToLock);
+                }
+            }
+        }
+
+        @Override
+        public void onSeekUpdate(long frameIndex) {
+            update((int) frameIndex, -1);
+        }
+
+        @Override
+        public boolean onSeekToComplete() {
+            if (mSeekToIndex != -1) {
+                seekTo(mSeekToIndex);
+                mSeekToIndex = -1;
+                return false;
+            }
+            return true;
+        }
+    };
 
     PicturePlayer(@NonNull Context context,
                   @PictureSource int source,
@@ -183,74 +203,6 @@ class PicturePlayer {
         mRenderer.onError("读取图片失败");
     }
 
-    private final OnSeekToListener mSeekListener = new OnSeekToListener() {
-        @Override
-        public void onSeekTo(long frameIndex) {
-            synchronized (mSeekToLock) {
-                if (mCacheBitmaps.isEmpty()) {
-                    SchedulerUtil.lockWait(mSeekToLock);
-                }
-            }
-        }
-
-        @Override
-        public void onSeekUpdate(long frameIndex) {
-            update((int) frameIndex, -1);
-        }
-
-        @Override
-        public boolean onSeekToComplete() {
-            if (mSeekToIndex != -1) {
-                seekTo(mSeekToIndex);
-                mSeekToIndex = -1;
-                return false;
-            }
-            return true;
-        }
-    };
-
-    private class ReadThread extends Thread {
-        @Override
-        public void run() {
-            try {
-                while (!mIsCancel && !mIsPlayCancel) {
-                    if (mReadFrame >= mFrameCount) {
-                        SystemClock.sleep(1);
-                        continue;
-                    }
-                    int size = mCacheBitmaps.size();
-                    if (size >= mCacheFrameNumber || (size >= 1 && isPaused())) {//暂停的情况下只读取一帧
-                        SystemClock.sleep(1);
-                        continue;
-                    }
-
-                    synchronized (mSeekToLock) {
-                        Bitmap bitmap = readBitmap(mPaths[mReadFrame]);
-
-                        if (bitmap == null || bitmap.isRecycled()) {
-                            throw new NullPointerException("读取的图片有错误");
-                        }
-
-                        mCacheBitmaps.add(bitmap);
-                        mReadFrame++;
-
-                        mSeekToLock.notifyAll();
-                    }
-
-                    if (mReadFrame == 1//第一帧
-                            && !mIsCancel//未取消
-                            && !mScheduler.isStarted()) {//未开始
-                        mScheduler.start();
-                    }
-                }
-            } catch (Throwable e) {
-                error(e);
-            }
-            mIsReadCancel = true;
-            threadStop();
-        }
-    }
-
     private Bitmap readBitmap(String path) throws Throwable {
         InputStream is;
         if (mSource == FILE) {
@@ -296,15 +248,6 @@ class PicturePlayer {
         return null;
     }
 
-    private class FrameUpdateListener implements OnFrameUpdateListener {
-        @Override
-        public void onFrameUpdate(long frameIndex) {
-            int index = (int) frameIndex;
-
-            update(index, index);
-        }
-    }
-
     private void update(int readFrameIndex, int frameIndex) {
         Bitmap bitmap = getBitmap(readFrameIndex);
 
@@ -338,14 +281,6 @@ class PicturePlayer {
         return bitmap;
     }
 
-    private class FrameListener extends OnSimpleFrameListener {
-        @Override
-        public void onStop() {
-            mIsPlayCancel = true;
-            threadStop();
-        }
-    }
-
     private void threadStop() {
         if (!mIsReadCancel
                 || !mIsPlayCancel && mScheduler.isStarted()) {
@@ -363,5 +298,64 @@ class PicturePlayer {
         void onStop();
 
         void onError(String message);
+    }
+
+    private class ReadThread extends Thread {
+        @Override
+        public void run() {
+            try {
+                while (!mIsCancel && !mIsPlayCancel) {
+                    if (mReadFrame >= mFrameCount) {
+                        SystemClock.sleep(1);
+                        continue;
+                    }
+                    int size = mCacheBitmaps.size();
+                    if (size >= mCacheFrameNumber || (size >= 1 && isPaused())) {//暂停的情况下只读取一帧
+                        SystemClock.sleep(1);
+                        continue;
+                    }
+
+                    synchronized (mSeekToLock) {
+                        Bitmap bitmap = readBitmap(mPaths[mReadFrame]);
+
+                        if (bitmap == null || bitmap.isRecycled()) {
+                            throw new NullPointerException("读取的图片有错误");
+                        }
+
+                        mCacheBitmaps.add(bitmap);
+                        mReadFrame++;
+
+                        mSeekToLock.notifyAll();
+                    }
+
+                    if (mReadFrame == 1//第一帧
+                            && !mIsCancel//未取消
+                            && !mScheduler.isStarted()) {//未开始
+                        mScheduler.start();
+                    }
+                }
+            } catch (Throwable e) {
+                error(e);
+            }
+            mIsReadCancel = true;
+            threadStop();
+        }
+    }
+
+    private class FrameUpdateListener implements OnFrameUpdateListener {
+        @Override
+        public void onFrameUpdate(long frameIndex) {
+            int index = (int) frameIndex;
+
+            update(index, index);
+        }
+    }
+
+    private class FrameListener extends OnSimpleFrameListener {
+        @Override
+        public void onStop() {
+            mIsPlayCancel = true;
+            threadStop();
+        }
     }
 }

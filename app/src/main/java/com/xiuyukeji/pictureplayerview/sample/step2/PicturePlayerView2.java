@@ -46,6 +46,14 @@ public class PicturePlayerView2 extends BasePicturePlayerView {
         init();
     }
 
+    private static void recycleBitmap(Bitmap bitmap) {
+        if (bitmap != null && !bitmap.isRecycled()) {
+            bitmap.recycle();
+        }
+    }
+
+    //... 省略SurfaceTextureListener的方法
+
     private void init() {
         setOpaque(false);//设置背景透明，记住这里是[是否不透明]
 
@@ -55,8 +63,6 @@ public class PicturePlayerView2 extends BasePicturePlayerView {
         mSrcRect = new Rect();
         mDstRect = new Rect();
     }
-
-    //... 省略SurfaceTextureListener的方法
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
@@ -81,6 +87,15 @@ public class PicturePlayerView2 extends BasePicturePlayerView {
         return BitmapFactory.decodeStream(getResources().getAssets().open(path));
     }
 
+    private void drawBitmap(Bitmap bitmap) {
+        Canvas canvas = lockCanvas();//锁定画布
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);// 清空画布
+        mSrcRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());//这里我将2个rect抽离出去，防止重复创建
+        mDstRect.set(0, 0, getWidth(), bitmap.getHeight() * getWidth() / bitmap.getWidth());
+        canvas.drawBitmap(bitmap, mSrcRect, mDstRect, mPaint);//将bitmap画到画布上
+        unlockCanvasAndPost(canvas);//解锁画布同时提交
+    }
+
     private class FrameUpdateListener implements OnFrameUpdateListener {
         @Override
         public void onFrameUpdate(long frameIndex) {
@@ -91,21 +106,6 @@ public class PicturePlayerView2 extends BasePicturePlayerView {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    private void drawBitmap(Bitmap bitmap) {
-        Canvas canvas = lockCanvas();//锁定画布
-        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);// 清空画布
-        mSrcRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());//这里我将2个rect抽离出去，防止重复创建
-        mDstRect.set(0, 0, getWidth(), bitmap.getHeight() * getWidth() / bitmap.getWidth());
-        canvas.drawBitmap(bitmap, mSrcRect, mDstRect, mPaint);//将bitmap画到画布上
-        unlockCanvasAndPost(canvas);//解锁画布同时提交
-    }
-
-    private static void recycleBitmap(Bitmap bitmap) {
-        if (bitmap != null && !bitmap.isRecycled()) {
-            bitmap.recycle();
         }
     }
 }

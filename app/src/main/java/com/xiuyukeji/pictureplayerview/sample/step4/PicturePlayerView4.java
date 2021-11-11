@@ -63,6 +63,12 @@ public class PicturePlayerView4 extends BasePicturePlayerView {
         init();
     }
 
+    private static void recycleBitmap(Bitmap bitmap) {
+        if (bitmap != null && !bitmap.isRecycled()) {
+            bitmap.recycle();
+        }
+    }
+
     private void init() {
         setOpaque(false);//设置背景透明，记住这里是[是否不透明]
 
@@ -98,31 +104,6 @@ public class PicturePlayerView4 extends BasePicturePlayerView {
         mScheduler = new Scheduler(duration, mFrameCount,
                 new FrameUpdateListener(),
                 new FrameListener());
-    }
-
-    private class ReadThread extends Thread {
-        @Override
-        public void run() {
-            try {
-                while (mReadFrame < mFrameCount) {//并且没有读完则继续读取
-                    if (mCacheBitmaps.size() >= MAX_REUSABLE_NUMBER) {//如果读取的超过最大缓存则暂停读取
-                        SystemClock.sleep(1);
-                        continue;
-                    }
-
-                    Bitmap bmp = readBitmap(mPaths[mReadFrame]);
-                    mCacheBitmaps.add(bmp);
-
-                    mReadFrame++;
-
-                    if (mReadFrame == 1) {//读取到第一帧后在开始调度器
-                        mScheduler.start();
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private Bitmap readBitmap(String path) throws IOException {
@@ -173,6 +154,40 @@ public class PicturePlayerView4 extends BasePicturePlayerView {
         mReusableBitmaps.add(bitmap);
     }
 
+    private void drawBitmap(Bitmap bitmap) {
+        Canvas canvas = lockCanvas();//锁定画布
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);// 清空画布
+        mSrcRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());//这里我将2个rect抽离出去，防止重复创建
+        mDstRect.set(0, 0, getWidth(), bitmap.getHeight() * getWidth() / bitmap.getWidth());
+        canvas.drawBitmap(bitmap, mSrcRect, mDstRect, mPaint);//将bitmap画到画布上
+        unlockCanvasAndPost(canvas);//解锁画布同时提交
+    }
+
+    private class ReadThread extends Thread {
+        @Override
+        public void run() {
+            try {
+                while (mReadFrame < mFrameCount) {//并且没有读完则继续读取
+                    if (mCacheBitmaps.size() >= MAX_REUSABLE_NUMBER) {//如果读取的超过最大缓存则暂停读取
+                        SystemClock.sleep(1);
+                        continue;
+                    }
+
+                    Bitmap bmp = readBitmap(mPaths[mReadFrame]);
+                    mCacheBitmaps.add(bmp);
+
+                    mReadFrame++;
+
+                    if (mReadFrame == 1) {//读取到第一帧后在开始调度器
+                        mScheduler.start();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private class FrameUpdateListener implements OnFrameUpdateListener {
         @Override
         public void onFrameUpdate(long frameIndex) {
@@ -207,21 +222,6 @@ public class PicturePlayerView4 extends BasePicturePlayerView {
                 ImageUtil.recycleBitmap(mReusableBitmaps.get(i));
             }
             mReusableBitmaps.clear();
-        }
-    }
-
-    private void drawBitmap(Bitmap bitmap) {
-        Canvas canvas = lockCanvas();//锁定画布
-        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);// 清空画布
-        mSrcRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());//这里我将2个rect抽离出去，防止重复创建
-        mDstRect.set(0, 0, getWidth(), bitmap.getHeight() * getWidth() / bitmap.getWidth());
-        canvas.drawBitmap(bitmap, mSrcRect, mDstRect, mPaint);//将bitmap画到画布上
-        unlockCanvasAndPost(canvas);//解锁画布同时提交
-    }
-
-    private static void recycleBitmap(Bitmap bitmap) {
-        if (bitmap != null && !bitmap.isRecycled()) {
-            bitmap.recycle();
         }
     }
 }

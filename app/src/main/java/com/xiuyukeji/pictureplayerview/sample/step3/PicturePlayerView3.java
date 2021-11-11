@@ -58,6 +58,12 @@ public class PicturePlayerView3 extends BasePicturePlayerView {
         init();
     }
 
+    private static void recycleBitmap(Bitmap bitmap) {
+        if (bitmap != null && !bitmap.isRecycled()) {
+            bitmap.recycle();
+        }
+    }
+
     private void init() {
         setOpaque(false);//设置背景透明，记住这里是[是否不透明]
 
@@ -93,6 +99,19 @@ public class PicturePlayerView3 extends BasePicturePlayerView {
                 new FrameUpdateListener());
     }
 
+    private Bitmap readBitmap(String path) throws IOException {
+        return BitmapFactory.decodeStream(getResources().getAssets().open(path));
+    }
+
+    private void drawBitmap(Bitmap bitmap) {
+        Canvas canvas = lockCanvas();//锁定画布
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);// 清空画布
+        mSrcRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());//这里我将2个rect抽离出去，防止重复创建
+        mDstRect.set(0, 0, getWidth(), bitmap.getHeight() * getWidth() / bitmap.getWidth());
+        canvas.drawBitmap(bitmap, mSrcRect, mDstRect, mPaint);//将bitmap画到画布上
+        unlockCanvasAndPost(canvas);//解锁画布同时提交
+    }
+
     private class ReadThread extends Thread {
         @Override
         public void run() {
@@ -118,10 +137,6 @@ public class PicturePlayerView3 extends BasePicturePlayerView {
         }
     }
 
-    private Bitmap readBitmap(String path) throws IOException {
-        return BitmapFactory.decodeStream(getResources().getAssets().open(path));
-    }
-
     private class FrameUpdateListener implements OnFrameUpdateListener {
         @Override
         public void onFrameUpdate(long frameIndex) {
@@ -132,21 +147,6 @@ public class PicturePlayerView3 extends BasePicturePlayerView {
             Bitmap bitmap = mCacheBitmaps.remove(0);//获取第一帧同时从缓存里删除
             drawBitmap(bitmap);
             recycleBitmap(bitmap);
-        }
-    }
-
-    private void drawBitmap(Bitmap bitmap) {
-        Canvas canvas = lockCanvas();//锁定画布
-        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);// 清空画布
-        mSrcRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());//这里我将2个rect抽离出去，防止重复创建
-        mDstRect.set(0, 0, getWidth(), bitmap.getHeight() * getWidth() / bitmap.getWidth());
-        canvas.drawBitmap(bitmap, mSrcRect, mDstRect, mPaint);//将bitmap画到画布上
-        unlockCanvasAndPost(canvas);//解锁画布同时提交
-    }
-
-    private static void recycleBitmap(Bitmap bitmap) {
-        if (bitmap != null && !bitmap.isRecycled()) {
-            bitmap.recycle();
         }
     }
 }

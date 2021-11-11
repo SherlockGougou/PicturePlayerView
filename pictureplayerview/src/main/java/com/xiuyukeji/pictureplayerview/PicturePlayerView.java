@@ -1,23 +1,24 @@
 package com.xiuyukeji.pictureplayerview;
 
+import static com.xiuyukeji.pictureplayerview.PicturePlayer.DEFAULT_MAX_CACHE_NUMBER;
+import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_CROP;
+import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.FILE;
+
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.SurfaceTexture;
-import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
+
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
 
 import com.xiuyukeji.pictureplayerview.annotations.FitSource;
 import com.xiuyukeji.pictureplayerview.interfaces.OnChangeListener;
 import com.xiuyukeji.pictureplayerview.interfaces.OnErrorListener;
 import com.xiuyukeji.pictureplayerview.interfaces.OnStopListener;
 import com.xiuyukeji.pictureplayerview.interfaces.OnUpdateListener;
-
-import static com.xiuyukeji.pictureplayerview.PicturePlayer.DEFAULT_MAX_CACHE_NUMBER;
-import static com.xiuyukeji.pictureplayerview.annotations.FitSource.FIT_CROP;
-import static com.xiuyukeji.pictureplayerview.annotations.PictureSource.FILE;
 
 /**
  * 图片播放器
@@ -121,13 +122,13 @@ public class PicturePlayerView extends TextureView implements SurfaceTextureList
     }
 
     @Override
-    public void setEnabled(boolean enabled) {
-        this.mIsEnabled = enabled;
+    public boolean isEnabled() {
+        return mIsEnabled;
     }
 
     @Override
-    public boolean isEnabled() {
-        return mIsEnabled;
+    public void setEnabled(boolean enabled) {
+        this.mIsEnabled = enabled;
     }
 
     /**
