@@ -51,13 +51,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void findView() {
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mStartFab = (FloatingActionButton) findViewById(R.id.start);
-        mPauseFab = (FloatingActionButton) findViewById(R.id.pause);
-        mStopFab = (FloatingActionButton) findViewById(R.id.stop);
-        mSeekBar = (SeekBar) findViewById(R.id.seek);
-        mPicturePlayerView = (PicturePlayerView) findViewById(R.id.player);
-        mFpsView = (TextView) findViewById(R.id.fps);
+        mToolbar = findViewById(R.id.toolbar);
+        mStartFab = findViewById(R.id.start);
+        mPauseFab = findViewById(R.id.pause);
+        mStopFab = findViewById(R.id.stop);
+        mSeekBar = findViewById(R.id.seek);
+        mPicturePlayerView = findViewById(R.id.player);
+        mFpsView = findViewById(R.id.fps);
 
         mFpsMeasureUtil = new FpsMeasureUtil();
     }
